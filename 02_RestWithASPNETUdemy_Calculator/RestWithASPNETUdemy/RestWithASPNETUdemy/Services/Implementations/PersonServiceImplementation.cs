@@ -10,8 +10,6 @@ namespace RestWithASPNETUdemy.Services.Implementations
 {
     public class PersonServiceImplementation : IPersonService
     {
-        private volatile int count;
-
         private MySQLContext _context;
         public PersonServiceImplementation(MySQLContext context)
         {
