@@ -1,4 +1,5 @@
 ﻿using RestWithASPNETUdemy.Model;
+using RestWithASPNETUdemy.Model.Context;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,59 +12,74 @@ namespace RestWithASPNETUdemy.Services.Implementations
     {
         private volatile int count;
 
+        private MySQLContext _context;
+        public PersonServiceImplementation(MySQLContext context)
+        {
+            _context = context;
+        }
+        public List<Person> FindAll()
+        {
+            return _context.Persons.ToList();
+        }
+
+        public Person FindByID(long id)
+        {
+            return _context.Persons.SingleOrDefault(x => x.Id == id);
+        }
+
         public Person Create(Person person)
         {
+            try
+            {
+                _context.Add(person);
+                _context.SaveChanges();
+                return person;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        public Person Update(Person person)
+        {
+            if (!Exists(person.Id)) return new Person();
+            var result = _context.Persons.SingleOrDefault(x => x.Id == person.Id);
+            if (result != null)
+                try
+                {
+                    _context.Entry(result).CurrentValues.SetValues(person);
+                    _context.SaveChanges();
+
+                }
+                catch (Exception)
+                {
+
+                    throw;
+                }
             return person;
         }
 
         public void Delete(long id)
         {
-            
+            var result = _context.Persons.SingleOrDefault(x => x.Id == id);
+            if (result != null)
+                try
+                {
+                    _context.Persons.Remove(result);
+                    _context.SaveChanges();
+
+                }
+                catch (Exception)
+                {
+
+                    throw;
+                }
         }
 
-        public List<Person> FindAll()
+        private bool Exists(long id)
         {
-            var persons = new List<Person>();
-            for (int i = 0; i < 8; i++)
-            {
-                Person person = MockPerson(i);
-                persons.Add(person);
-            }
-            return persons;
-        }
-
-        private Person MockPerson(int i)
-        {
-            return new Person
-            {
-                Id = IncrementAndGet(),
-                FirstName = "Person Name" + i,
-                LastName = "Person LastName" + i,
-                Address = "Some Address" + i,
-                Gender = "Male"
-            };
-        }
-
-        private long IncrementAndGet()
-        {
-            return Interlocked.Increment(ref count);
-        }
-
-        public Person FindByID(long id)
-        {
-            return new Person
-            {
-                Id = IncrementAndGet(),
-                FirstName = "Jean",
-                LastName = "Basoni",
-                Address = "Rio de Janeiro",
-                Gender = "Male"
-            };
-        }
-
-        public Person Update(Person person)
-        {
-            return person;
+            return _context.Persons.Any(x => x.Id == id);
         }
     }
 }
